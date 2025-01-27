@@ -1,4 +1,7 @@
 
+using Application.Services;
+using DataAccess;
+
 namespace API
 {
     public class Program
@@ -8,6 +11,19 @@ namespace API
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
+
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+            builder.Services.AddSingleton(new UserRepository(connectionString));
+            builder.Services.AddSingleton(new DatabaseRepository(connectionString));
+            builder.Services.AddSingleton(new SchemaRepository(connectionString));
+            builder.Services.AddSingleton(new TableRepository(connectionString));
+            builder.Services.AddSingleton(new ColumnRepository(connectionString));
+
+            builder.Services.AddTransient<UserService>();
+            builder.Services.AddTransient<DatabaseService>();
+            builder.Services.AddTransient<SchemaService>();
+            builder.Services.AddTransient<TableService>();
+            builder.Services.AddTransient<ColumnService>();
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
