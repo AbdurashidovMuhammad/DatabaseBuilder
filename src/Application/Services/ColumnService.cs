@@ -17,6 +17,11 @@ namespace Application.Services
             _columnRepository.AddColumn(tableId, name, dataType, isNullable, isUnique);
         }
 
+        public void InsertRow(Guid tableId, Dictionary<string, object> columnValues)
+        {
+            _columnRepository.InsertRow(tableId, columnValues);
+        }
+
         public List<ColumnDto> GetTableColumns(Guid tableId)
         {
             var columns = _columnRepository.GetTableColumns(tableId);

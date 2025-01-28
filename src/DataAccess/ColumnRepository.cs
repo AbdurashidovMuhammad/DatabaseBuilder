@@ -81,6 +81,60 @@ namespace DataAccess
             }
         }
 
+        public void InsertRow(Guid tableId, Dictionary<string, object> columnValues)
+        {
+            using (var connection = new NpgsqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                // 1. Get database, schema, and table names
+                var query = @"
+            SELECT d.name as db_name, s.name as schema_name, t.name as table_name
+            FROM tables t
+            JOIN schemas s ON t.scheme_id = s.id
+            JOIN databases d ON s.database_id = d.id
+            WHERE t.id = @tableId";
+
+                string dbName, schemaName, tableName;
+                using (var cmd = new NpgsqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@tableId", tableId);
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            dbName = reader.GetString(0);
+                            schemaName = reader.GetString(1);
+                            tableName = reader.GetString(2);
+                        }
+                        else
+                        {
+                            throw new Exception("Table not found.");
+                        }
+                    }
+                }
+
+                // 2. Build the INSERT query
+                var columns = string.Join(", ", columnValues.Keys.Select(k => $"\"{k}\""));
+                var values = string.Join(", ", columnValues.Values.Select(v => $"@{v}"));
+                var insertQuery = $"INSERT INTO \"{schemaName}\".\"{tableName}\" ({columns}) VALUES ({values})";
+
+                // 3. Execute the INSERT query
+                using (var dbConnection = new NpgsqlConnection(_connectionString.Replace("Database=database_builder", $"Database={dbName}")))
+                {
+                    dbConnection.Open();
+                    using (var command = new NpgsqlCommand(insertQuery, dbConnection))
+                    {
+                        foreach (var kvp in columnValues)
+                        {
+                            command.Parameters.AddWithValue($"@{kvp.Key}", kvp.Value);
+                        }
+                        command.ExecuteNonQuery();
+                    }
+                }
+            }
+        }
+
         public List<Column> GetTableColumns(Guid tableId)
         {
             var columns = new List<Column>();

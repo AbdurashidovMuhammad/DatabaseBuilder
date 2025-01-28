@@ -1,5 +1,6 @@
 ﻿using Application.Services;
 using Core.DTOs;
+using DataAccess;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,6 +29,13 @@ namespace API.Controllers
             {
                 return BadRequest(ex.Message);
             }
+        }
+
+        [HttpPost("insert/{tableId}")]
+        public IActionResult InsertRow(Guid tableId, [FromBody] Dictionary<string, object> columnValues)
+        {
+            _columnService.InsertRow(tableId, columnValues);
+            return Ok();
         }
 
         [HttpGet("table/{tableId}")]
